@@ -235,6 +235,11 @@ FM.report = function (doc, headChars, tailChars) {
     return (Math.min(a[2], b[2]) - Math.max(a[0], b[0]) > tol) && (Math.min(a[3], b[3]) - Math.max(a[1], b[1]) > tol);
   }
   var overlaps = [], overflows = [], kh = 0, kt = 0, counts = [];
+  // 重叠要连坐标一起报：只写"文本↔图/线"定位不了是哪两块，等于没报
+  function where(bb) {
+    return 'y' + Math.round(bb[0] / FM.MM) + '–' + Math.round(bb[2] / FM.MM) +
+           ' x' + Math.round(bb[1] / FM.MM) + '–' + Math.round(bb[3] / FM.MM);
+  }
   for (var cp = 0; cp < doc.pages.length; cp++) {
     var pg = doc.pages[cp], tfs = [], rcs = [];
     for (var t = 0; t < pg.textFrames.length; t++) {
@@ -243,8 +248,12 @@ FM.report = function (doc, headChars, tailChars) {
     }
     for (var r = 0; r < pg.rectangles.length; r++) { rcs.push(pg.rectangles[r].geometricBounds); }
     for (var m = 0; m < tfs.length; m++) {
-      for (var n = m + 1; n < tfs.length; n++) { if (hit(tfs[m], tfs[n])) { overlaps.push('P' + (cp + 1) + ' 文本↔文本'); } }
-      for (var q = 0; q < rcs.length; q++) { if (hit(tfs[m], rcs[q])) { overlaps.push('P' + (cp + 1) + ' 文本↔图/线'); } }
+      for (var n = m + 1; n < tfs.length; n++) {
+        if (hit(tfs[m], tfs[n])) { overlaps.push('P' + (cp + 1) + ' 文本↔文本 ' + where(tfs[m]) + ' / ' + where(tfs[n])); }
+      }
+      for (var q = 0; q < rcs.length; q++) {
+        if (hit(tfs[m], rcs[q])) { overlaps.push('P' + (cp + 1) + ' 文本↔图/线 ' + where(tfs[m]) + ' / ' + where(rcs[q])); }
+      }
     }
     var maxY = 0;
     for (var t2 = 0; t2 < pg.textFrames.length; t2++) { maxY = Math.max(maxY, pg.textFrames[t2].geometricBounds[2] / FM.MM); }
