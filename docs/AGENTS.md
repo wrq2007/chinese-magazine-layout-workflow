@@ -20,8 +20,17 @@
 4. **文本只复制粘贴，不改一个字**：正文一律由脚本从源文件读入、原样流入排版，
    **不增加、不删除、不修改任何字符**（含标点、空格、数字、`&` 这类特殊符号）。
    曾被坑过两次：漏掉「动**&**静」的 &、把作者写的逗号擅自改成顿号。
-   **不需要事后逐字比对——守住这条不变式即可**（比对脚本已移出例行流程，仅按需备用）。
+   **不需要事后逐字比对——守住这条不变式即可**。
+   （若确实要核对，走 `check-text-fidelity.py` 的 PDF 抽文，0.2 秒出字符级结论；
+   **绝不用视觉模型读字**，见第 6 条。）
 5. **任何内容层面的改动，先问用户**再看要不要改。
+6. **最后复核不许用视觉模型核对文字**（2026-09 用户定的规矩）：图片送进模型前必然被降采样，
+   小字读数不可信——实测把署名「翟翊翔」读成「曹玥玥」、把图注「nomadict」读成「nomadicst」。
+   - 文字一致性只走一条路：**从 PDF 抽字符**与源文对照
+     （`layout-qc/scripts/check-text-fidelity.py <成品.pdf> <源文...>`）。
+   - 视觉模型只保留两个用途：**描述"看到了哪些元素"**、**判断整体观感与结构**（留白、层级、元素是否被压/越界）。
+     问它问题时**不要让它抄字**。
+   - 几何量（比例、留白、边界）一律程序化扫描，不问模型。
 
 ## 工作流入口（技能与脚本）
 
@@ -32,7 +41,8 @@
 | 背景生成（模糊 + 渐变遮罩 + **自动对比度校准**） | `magazine-layout/scripts/make-background.ps1` |
 | 源文解析（docx/md/txt → 段落数组） | `magazine-layout/scripts/extract-text.py` |
 | 一条命令流水线 | `magazine-layout/scripts/make-piece.ps1` |
-| 成品验收 | `layout-qc/scripts/`：`check-overlap.jsx`、`check-cjk-typography.jsx`、`check-contrast.ps1`、`check-layout-rules.ps1`、`list-pdf-fonts.ps1`、`measure-export.ps1` |
+| 成品验收 | `layout-qc/scripts/`：`check-overlap.jsx`、`check-cjk-typography.jsx`、`check-contrast.ps1`、`list-pdf-fonts.ps1`、`measure-export.ps1`、**`check-pdf-print.py`（印前量测）**、**`check-text-fidelity.py`（文字保真）**、**`verify-page-crop.py`（局部观感复核）**；`check-layout-rules.ps1` 目前有 bug（`op_Subtraction`），暂用 `check-pdf-print.py` 顶替 |
+| 先量后放（多图 + 文案自由版式） | `magazine-layout/scripts/lib-flow-measure.jsx`（逐块测高定位，避免文本框重叠） |
 | 设计判断（中文用字/版式/反 AI 味） | skill `art-direction`（重点看 `references/chinese-type.md`） |
 | 已知坑清单 | `layout-qc/references/mistakes-log.md`（**开工前扫一遍**） |
 
@@ -59,4 +69,4 @@
 
 ## 已有成品
 
-- 序言（185×260 跨页）：`E:\YOUR_PROJECT\`
+- 序言（185×260 跨页）：`E:\杂志\序言\`

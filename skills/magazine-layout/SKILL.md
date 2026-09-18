@@ -70,6 +70,33 @@ description: 多页刊物的结构与系统搭建——杂志、画册、年报�
 
 **新增一种版式**：写一个 `pat_<名字>(pageIdx, spec)` 函数（内部用 `txt()` / `rect()` / `img()` 画），再在渲染循环里加一个分支即可——不用改动其它 pattern。
 
+### 先量后放（多图 + 文案的自由版式）
+
+`scripts/lib-flow-measure.jsx` —— **"逐块测高定位"库**，可被任何 InDesign 脚本 `#include`。
+
+什么时候用它：拿到一批图和一份文案，要按内容自由编排（不是套 pattern），
+每段的实际行数事先算不准的时候。**不要用固定高度写死文本框**——文字量少于预期时，
+两块文字框会大面积重叠，InDesign 不报错、导出后字压字（2026-09《通透》真踩过）。
+
+```jsx
+#include "lib-flow-measure.jsx"          // 路径按实际位置调整
+FM.init(185, 260, {top:18, bottom:22, inside:20, outside:16}, 3);
+var doc = FM.newDoc('MyBuild', 6);       // 自带 label + 逐页页边距 + 出血
+var F_BODY = FM.font('宋体', ['Regular']);
+var y = FM.flow(doc.pages[0], 20, 50, 110, 正文, {font:F_BODY, size:11, leading:19.5, color:K});
+var b = FM.pic(doc.pages[0], 'E:/x/a.jpg', 20, y + 6, 66);   // 返回底边 y，接着往下排
+FM.latinify(doc, FM.font('Times New Roman', ['Regular']));    // 数字/西文换 Times，& 不动
+FM.report(doc).join('\n');                                    // 重叠/溢出/避头尾/行宽/内容底端
+```
+
+三条硬要求：
+
+1. **放图前先算分辨率上限**：`最大宽度(mm) = 像素宽 ÷ 350 × 25.4`。
+   UI 截图常只有 400–450px，意味着最多只能放到 28–30mm——先把这件事算清楚，再决定版式。
+2. **自查不要按元素类型排除**。线、色块、图、文字一视同仁地参与求交；
+   要放行的必须逐条列白名单并写明理由（把 `rule` 排除在外过，结果竖线压字没被抓到）。
+3. **文本只复制粘贴**：一律由脚本从源文件读入、原样流入排版，不手打、不改一个字。
+
 ### 一条命令的流水线
 
 `scripts/make-piece.ps1` 串起全流程：背景（自动校准对比度）→ 解析源文 → 排版 → 合成预览与局部图 → 规格检查 → 逐字比对，并输出各步耗时。
