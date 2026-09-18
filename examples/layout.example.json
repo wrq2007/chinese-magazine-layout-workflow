@@ -1,0 +1,38 @@
+{
+  "label": "LayoutDemo",
+  "outDir": "E:/YOUR_PROJECT/_demo",
+  "workDir": "E:/YOUR_PROJECT/_build",
+  "outputBase": "样张_多图多版式",
+  "paragraphsJson": "E:/YOUR_PROJECT/_build/paragraphs.json",
+  "previewDpi": 200,
+  "design": {
+    "page": { "widthMm": 185, "heightMm": 260, "bleedMm": 3 },
+    "margins": { "inside": 32, "outside": 28, "top": 26, "bottom": 22 },
+    "grid": { "columns": 1, "gutterMm": 6 },
+    "type": {
+      "titleFont": "宋体", "bodyFont": "宋体", "sansFont": "微软雅黑", "latinFont": "Times New Roman",
+      "titlePt": 40, "kickerPt": 10, "bodyPt": 10.5, "leadingPt": 18
+    },
+    "colors": {
+      "text": [245, 243, 239], "accent": [214, 176, 108], "band": [150, 20, 30],
+      "muted": [216, 218, 220], "dim": [186, 188, 190]
+    },
+    "sigLayout": [[12, 18, 26, 40], [9.5, 15, 5, 60], [8.5, 13, 4, 20]]
+  },
+  "assets": {
+    "photo-main": "assets/photo-a.jpg",
+    "photo-stand": "assets/photo-b.jpg",
+    "photo-desk": "assets/photo-c.jpg",
+    "bg-full": "bg-panorama.jpg"
+  },
+  "flowText": [1, 9],
+  "pages": [
+    { "pattern": "cover", "image": "photo-main", "kicker": "动静影像工作社  ·  社刊序言", "title": "影由心生", "sub": "2026 · 空场时刻" },
+    { "pattern": "text", "title": "写在前面", "columns": 1, "flowStart": true },
+    { "pattern": "plate", "image": "photo-stand", "caption": "图 01｜看台与分区标识：空场时刻的秩序感。" },
+    { "pattern": "plate", "image": "photo-desk", "caption": "图 02｜桌面与席卡：活动开始前的秩序。" },
+    { "pattern": "quote", "image": "bg-full", "text": "「影由心生，心之所至，影之所随。」", "source": "—— 本文第九段" },
+    { "pattern": "text", "columns": 1 },
+    { "pattern": "signature", "lines": ["王锐琪", "动&静影像工作社2023级副社长", "2023级10班·2025.10.18"] }
+  ]
+}

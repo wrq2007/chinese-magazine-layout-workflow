@@ -1,0 +1,24 @@
+{
+  "label": "ForewordBuild",
+  "outDir": "E:/YOUR_PROJECT",
+  "workDir": "E:/YOUR_PROJECT/_build",
+  "bgDir": "E:/YOUR_PROJECT/_build/",
+  "outputBase": "序言_185x260_跨页",
+  "paragraphsJson": "E:/YOUR_PROJECT/_build/paragraphs.json",
+  "previewDpi": 300,
+  "titleIndex": 0,
+  "kicker": "动静影像工作社  ·  社刊序言",
+  "bodyFromIndex": 1,
+  "signatureFromIndex": 10,
+  "signatureArrange": [[12], [10], [11, 13]],
+  "signatureJoin": "·",
+  "page": { "widthMm": 185, "heightMm": 260, "bleedMm": 3, "pages": 2 },
+  "margins": { "inside": 32, "outside": 28, "top": 26, "bottom": 22 },
+  "start": { "kickerTopMm": 30, "titleTopMm": 46, "ruleTopMm": 88, "bodyTopMm": 100 },
+  "type": {
+    "titleFont": "宋体", "bodyFont": "宋体", "sansFont": "微软雅黑", "latinFont": "Times New Roman",
+    "titlePt": 44, "kickerPt": 10, "bodyPt": 11, "leadingPt": 19.5
+  },
+  "sigLayout": [[12, 18, 26, 40], [9.5, 15, 5, 60], [8.5, 13, 4, 20]],
+  "colors": { "text": [245, 243, 239], "accent": [214, 176, 108], "sig2": [216, 218, 220], "sig3": [186, 188, 190] }
+}

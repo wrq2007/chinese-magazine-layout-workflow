@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="764.0mm" height="1064.0mm" viewBox="0 0 191.0 266.0">
+<style>.bleed{fill:none;stroke:#ff00aa;stroke-width:0.25;stroke-dasharray:2 1.5}.trim{fill:none;stroke:#111;stroke-width:0.4}.margin{fill:none;stroke:#2b7fff;stroke-width:0.25}.col{stroke:#7cc4ff;stroke-width:0.175}.baseline{stroke:#cfe6ff;stroke-width:0.1}.fold{stroke:#ff8a00;stroke-width:0.25;stroke-dasharray:3 1.5}</style>
+<rect class="bleed" x="0" y="0" width="191.0" height="266.0"/>
+<rect class="trim" x="3.0" y="3.0" width="185.0" height="260.0"/>
+<rect class="margin" x="23.0" y="21.0" width="149.0" height="220.0"/>
+<g class="col">
+<line x1="45.5" y1="21.0" x2="45.5" y2="241.0"/>
+<line x1="71.5" y1="21.0" x2="71.5" y2="241.0"/>
+<line x1="97.5" y1="21.0" x2="97.5" y2="241.0"/>
+<line x1="123.5" y1="21.0" x2="123.5" y2="241.0"/>
+<line x1="149.5" y1="21.0" x2="149.5" y2="241.0"/>
+</g>
+<text x="3.0" y="1.5" font-size="3.4" fill="#111">185x260mm · bleed 3mm · 6 cols · gutter 7mm · margins T18/B22/In20/Out16</text>
+</svg>

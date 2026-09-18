@@ -1,0 +1,3 @@
+interface:
+  display_name: "排版成品质检"
+  short_description: "交付前量测成品的尺寸、版面与文字，并驱动回改"

@@ -1,0 +1,17 @@
+# 构建与中间产物
+_build/
+_demo/
+*.idlk
+*.pdf
+*.indd
+*.jpg
+*.png
+!skills/**/*.svg
+
+# 凭据与本地配置（绝不提交）
+.credentials.yaml
+*.credentials*
+config.toml
+**/.dsh/**
+**/.codex/**
+*.log

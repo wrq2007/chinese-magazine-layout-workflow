@@ -1,0 +1,62 @@
+# 杂志排版项目指令
+
+> 这份文件给"接手本项目的 Codex 会话"看。工作流程与规则都在这里，不必依赖历史对话。
+
+## 项目规格（每一件成品都按此执行）
+
+> **规格以 skill `cng-magazine-layout` 为准**（有《中国国家地理》官方刊例做来源）。规格还可能变，**不必纠结数值，重点管内容**。
+
+- 开本 **185×260mm**，**出血 3mm**，**四色胶装**，**175 线**
+- 版心 **上 18 / 下 22 / 内 20 / 外 16 mm**（149×220mm）；基准 **6 栏**（栏宽 19 + 栏距 7）
+- 正文 **9pt / 14pt**；图注 8.5pt；页码 7.5pt；素材按 **350dpi** 备料（300dpi 是广告最低交付线）
+- 色彩：CMYK，总墨量 TAC ≤300%（涂布纸）；正文与小字用**单色黑 K100**，不用四色黑；深底白字字号 ≥10pt
+- 交付四件套：**印刷 PDF**（CMYK + 3mm 出血，TrimBox 必须等于成品尺寸）+ **可编辑 .indd** + **300dpi 预览** + 需要的**局部放大图**
+
+## 与用户协作的硬性偏好
+
+1. 全程**简体中文**、结论先行。
+2. 命令可直接执行；但**删除/覆盖/杀进程**等有风险操作先征得确认。
+3. **不做纸面宣称**：任何交付前必须用真实产出物验证并给出证据（像素/毫米/对比度/内嵌字体），做不到就明确说未完成。
+4. **文本只复制粘贴，不改一个字**：正文一律由脚本从源文件读入、原样流入排版，
+   **不增加、不删除、不修改任何字符**（含标点、空格、数字、`&` 这类特殊符号）。
+   曾被坑过两次：漏掉「动**&**静」的 &、把作者写的逗号擅自改成顿号。
+   **不需要事后逐字比对——守住这条不变式即可**（比对脚本已移出例行流程，仅按需备用）。
+5. **任何内容层面的改动，先问用户**再看要不要改。
+
+## 工作流入口（技能与脚本）
+
+| 用途 | 位置 |
+| --- | --- |
+| 版式引擎（按页调用版式） | `~/.codex/skills/magazine-layout/scripts/build-layout.jsx`（pattern：cover / text / plate / imageText / quote / toc / signature / blank） |
+| 单篇版式（旧路径） | `magazine-layout/scripts/build-piece.jsx` |
+| 背景生成（模糊 + 渐变遮罩 + **自动对比度校准**） | `magazine-layout/scripts/make-background.ps1` |
+| 源文解析（docx/md/txt → 段落数组） | `magazine-layout/scripts/extract-text.py` |
+| 一条命令流水线 | `magazine-layout/scripts/make-piece.ps1` |
+| 成品验收 | `layout-qc/scripts/`：`check-overlap.jsx`、`check-cjk-typography.jsx`、`check-contrast.ps1`、`check-layout-rules.ps1`、`list-pdf-fonts.ps1`、`measure-export.ps1` |
+| 设计判断（中文用字/版式/反 AI 味） | skill `art-direction`（重点看 `references/chinese-type.md`） |
+| 已知坑清单 | `layout-qc/references/mistakes-log.md`（**开工前扫一遍**） |
+
+三个技能都已全局安装，新会话自动可见；DeepSeek Harness 侧同样可用（`~/.dsh/skills`）。
+
+## 与 InDesign 交互的要点（血泪版）
+
+- 标尺单位设为 POINTS，坐标用 `mm × 2.8346`；**字号/行距也跟随标尺单位**（设成毫米会让 33pt 变 33mm → 文字溢出消失）
+- 母版必须逐页 `appliedMaster` 才会出现页码
+- 导出 PDF 时**不要传预设**（预设会覆盖 `useDocumentBleedWithPDF`，导致 0 出血）
+- JPG 导出忽略 `pageString`：一次导整本，"文件名 + 页码"
+- 只操作自己打 `label` 的文档；收工关闭自己并恢复原置前文档（并行安全）
+- 脚本含中文时必须存 **UTF-8 with BOM**，否则 PowerShell 5.1 按 ANSI 解析报语法错
+
+## 中文排印底线（每次自动执行，不必用户交代）
+
+- 行宽 **25–35 字/行**（特稿两栏约 21 字/行亦可）；正文 9pt（杂志常规）到 11pt（书籍散文）；反白额外 +0.5–1pt
+- 小字不用 Light/Thin；**深底白字 ≥10pt**，9pt 以下不反白
+- 数字与西文换 Times 类西文字体（比中文小 0.5pt），`&` 不按西文处理
+- 避头尾逐行校验；署名三级递减（姓名 → 单位职务 → 班级日期），右对齐
+- 图作背景时：模糊 + 渐变遮罩（**方向与照片明暗相反**）+ 自动校准到对比度 ≥4.5:1
+- 内容层细则（标题不拆行、图注与图同页、孤字成行、标点全角、年代写法统一等）见
+  `~/.codex/skills/magazine-layout/references/text-rules.md`
+
+## 已有成品
+
+- 序言（185×260 跨页）：`E:\YOUR_PROJECT\`
