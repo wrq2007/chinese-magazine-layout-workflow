@@ -18,6 +18,10 @@ Copy-Item .\skills\* "$HOME\.dsh\skills\" -Recurse -Force
 
 dsh 的本地技能根目录为：`<项目>/.dsh/skills`、`<项目>/.agents/skills`、`~/.dsh/skills`。
 
+> dsh（DeepSeek Harness）在本工作流里承担**视觉复读与文案生成**（依托 DeepSeek 的视觉/语言模型），
+> 与 Codex 共用同一台 InDesign。InDesign MCP 桥接在 dsh 侧的配置写法、并行安全纪律、
+> 以及实测性能数据见 [docs/architecture.md](docs/architecture.md)。
+
 ## 2. 改占位路径（必做）
 
 为保护原作者环境，脚本里的个人路径都替换成了占位符，直接跑会失败。请全局替换：
