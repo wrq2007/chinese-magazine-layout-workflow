@@ -85,6 +85,26 @@ FM.vrule = function (pg, x, y, hMm, wPt, color, none) {
   return FM.rect(pg, y, x, y + hMm, x + wPt / FM.MM, color, none);
 };
 
+// 统一的 story 样式设置（内部用）
+FM._set = function (f, text, o) {
+  f.textFramePreferences.insetSpacing = [0, 0, 0, 0];
+  var st = f.parentStory;
+  st.appliedFont = o.font; st.pointSize = o.size; st.leading = o.leading;
+  st.fillColor = o.color; st.tracking = o.tracking || 0;
+  st.hyphenation = false; st.justification = o.just || Justification.LEFT_ALIGN;
+  st.firstLineIndent = o.indent || 0;
+  st.spaceBefore = 0; st.spaceAfter = 0;
+  f.contents = text;
+  if (o.em) {   // 原文里的强调（**…**）：换强调字体显示，不改动任何字符
+    try {
+      var whole = String(f.parentStory.contents);
+      var idx = whole.indexOf(o.em);
+      if (idx >= 0) { f.parentStory.characters.itemByRange(idx, idx + o.em.length - 1).appliedFont = o.emFont; }
+    } catch (eE) { }
+  }
+  return f.parentStory;
+};
+
 // ★ 核心：先建一个超高框 → autoSizing 量真实高度 → 关掉 → 按高度重设边界
 // 注意：autoSizing 在本机是"绕中心缩放"的，autoSizingReferencePoint 不生效，
 //       所以只能拿它的高度，坐标必须自己重设。
@@ -127,18 +147,65 @@ FM.flow = function (pg, x, y, w, text, o) {
   return y + hPt / FM.MM;                      // 返回底边 y（mm）
 };
 
-// 放图：按宽度放、保持原比例，返回底边 y。wMm 要按"有效 dpi ≥ 300（理想 350）"倒推上限
-FM.pic = function (pg, filePath, x, y, wMm, none, note) {
-  var f = pg.rectangles.add({ geometricBounds: [FM.mm(y), FM.mm(x), FM.mm(y + 10), FM.mm(x + wMm)] });
+// 放图：**先算尺寸再建框**，不依赖任何 fit 的副作用，返回图的真实底边 y。
+// 必须传入源图像素宽高——这样高度是算出来的确定值。
+// 走过的弯路（别再试）：
+//   ① 建个临时高度的框再读 frame.geometricBounds → 读到的是临时高度，不是图高；
+//   ② 用 fit(PROPORTIONALLY) → 那是"把图装进框"，图会缩到框里，宽度不对；
+//   ③ 用 FRAME_TO_CONTENT → 未缩放的图有 300mm 级的原始尺寸，框一拉就顶到粘贴板外报错。
+FM.pic = function (pg, filePath, x, y, wMm, pxW, pxH, none, note) {
+  var hMm = wMm * pxH / pxW;
+  var f = pg.rectangles.add({ geometricBounds: [FM.mm(y), FM.mm(x), FM.mm(y + hMm), FM.mm(x + wMm)] });
   f.place(new File(filePath));
-  f.fit(FitOptions.PROPORTIONALLY);      // 用 PROPORTIONALLY（装进框），不要 FILL_PROPORTIONALLY（会裁切）
+  f.fit(FitOptions.PROPORTIONALLY);      // 框的宽高比已等于原图，装进去正好铺满、不裁切
   f.fit(FitOptions.CENTER_CONTENT);
-  var b = f.geometricBounds;
   f.strokeWeight = 0; f.strokeColor = none; f.label = note || 'img';
-  return b[2] / FM.MM;
+  return y + hMm;
 };
-FM.imgW = function (px, wMm) { return wMm; };
+// 按"有效 dpi 不低于 N"倒推这张图最多能放多宽（mm）
+FM.maxW = function (pxW, minDpi) { return pxW / (minDpi || 350) * 25.4; };
 FM.dpiOf = function (pxW, wMm) { return Math.round(pxW / (wMm / 25.4)); };
+
+// 多栏串文：正文按 n 栏往下灌，返回底边 y。
+// 步骤：① 临时框数总行数 → ② 按"每栏均分"猜一个栏高 → ③ 真建链式框，查末栏是否溢出，
+//       溢出就加一行高度重建（最多 10 次）。
+// 为什么要"建了再查"：栏内可能有行距不同的段落（如引文 26pt、正文 19.5pt），
+// 单纯按 总行数÷栏数 会把高度算短，末栏一定溢出。踩过。
+// o.after(story)：可选回调，用来在建框后给个别段落单独套样式（引文、强调等）。
+// 注意：分栏适合整块文字；短到每栏不足 3 行的块直接单栏，别分。
+FM.cols = function (pg, x, y, wMm, n, gutterMm, text, o) {
+  var cw = (wMm - gutterMm * (n - 1)) / n;
+  var probe = pg.textFrames.add({ geometricBounds: [FM.mm(20), FM.mm(x), FM.mm(240), FM.mm(x + cw)] });
+  var pst = FM._set(probe, text, o);
+  if (o.after) { o.after(pst); }
+  var L = pst.lines.length;
+  probe.remove();
+
+  var baseLines = Math.ceil(L / n);
+  var frames = null, hPt = 0;
+  for (var attempt = 0; attempt < 10; attempt++) {
+    hPt = (baseLines + attempt) * o.leading;
+    frames = [];
+    for (var i = 0; i < n; i++) {
+      var fx = x + i * (cw + gutterMm);
+      frames.push(pg.textFrames.add({ geometricBounds: [FM.mm(y), FM.mm(fx), FM.mm(y) + hPt, FM.mm(fx + cw)] }));
+    }
+    for (var k = 0; k < n - 1; k++) { frames[k].nextTextFrame = frames[k + 1]; }
+    var st = FM._set(frames[0], text, o);
+    if (o.after) { o.after(st); }
+    var overflowed = false;
+    for (var j = 0; j < n; j++) { if (frames[j].overflows) { overflowed = true; } }
+    if (!overflowed) { break; }
+    for (var d = 0; d < frames.length; d++) { frames[d].remove(); }
+    frames = null;
+  }
+  if (frames === null) {
+    FM.log('  警告：' + n + ' 栏反复装不下（共 ' + L + ' 行），已放弃分栏');
+    return y;
+  }
+  frames[0].label = 'cols';
+  return y + hPt / FM.MM;
+};
 
 // 数字/西文换西文字体（比中文小半磅）。& 不按西文处理——否则会被中西文间距撑开、字重也不对
 FM.latinify = function (doc, latinFont, re) {
