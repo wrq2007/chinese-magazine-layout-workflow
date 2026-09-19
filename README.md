@@ -1,4 +1,4 @@
-# 中文刊物 AI 排版工作流（Codex + InDesign）
+﻿# 中文刊物 AI 排版工作流（Codex + InDesign）
 
 > An AI-assisted print layout workflow for Chinese magazines and books —
 > skills, a pattern-driven layout engine, and measurement-based acceptance checks.
@@ -124,6 +124,23 @@ Codex 排版 → 本地多模态模型审 → Codex 改 → 另一个模型复�
 每次注入），并明确禁掉两件事：不要它估几何（几何一律程序量毫米）、不要它抄字（图片会缩放，小字必读错）。
 做法与提示词要点见 [skills/layout-qc/references/review-loop.md](skills/layout-qc/references/review-loop.md)。
 
+### 6. 先变脚本，再转本地，最后才留给云端模型
+
+一篇 4 页稿走完全流程粗算 40–50 万 token，其中真正"非模型不可"的推理不到两成。
+省钱的顺序不能颠倒：
+
+```
+① 量测、比对、判定  → 变脚本（0 token）      qc-all.py 一条命令 4–5 秒出验收表
+② 看图、审美、草案  → 转本地模型（0 费用）    ask-local-model.py
+③ 需求理解、脚本排错、跨文件一致性 → 才留给云端模型
+```
+
+关键动作：**交给复核模型时只给它 `qc-all` 出的那张表，不让它自己读 PDF 量尺寸**——
+那一步单次 40–80k token，改成读表降到 5–10k。加上"开工只读 2KB 必读版错误档案、
+不每轮重读 33KB 全档"，整体约省 75%，而省掉的是"模型在干脚本该干的活"和"重复灌上下文",
+不是省掉推理，所以质量不降。完整路由与实测数字见
+[skills/layout-qc/references/cost-routing.md](skills/layout-qc/references/cost-routing.md)。
+
 ## 目录结构
 
 ```
@@ -184,3 +201,4 @@ Copy-Item .\skills\* "$HOME\.codex\skills\" -Recurse -Force
 ## 许可
 
 MIT（见 [LICENSE](LICENSE)）。第三方来源的授权以各自仓库为准，详见 `sources.md`。
+
