@@ -10,7 +10,7 @@ var t0 = new Date().getTime();
 var report = [];
 
 // ---------- 读配置 ----------
-var cfgFile = new File('E:/YOUR_PROJECT/_build/piece.json');
+var cfgFile = new File('E:/杂志/序言/_build/piece.json');
 if (!cfgFile.exists) { 'CONFIG_NOT_FOUND: ' + cfgFile.fsName; }
 else {
   cfgFile.encoding = 'UTF-8';

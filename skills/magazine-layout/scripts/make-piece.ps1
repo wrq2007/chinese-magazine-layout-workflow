@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   单篇成品流水线：背景（自动校准对比度）→ 解析源文 → 配置驱动排版 → 合成预览 → 规格检查。
   文本不变式：正文只复制粘贴（脚本从源文件读入、原样流入排版），不增不删不改一个字——因此不做事后比对。
@@ -18,9 +18,9 @@ param(
 )
 
 $ErrorActionPreference = 'Continue'
-$skill = 'C:\Users\YOUR_NAME\.codex\skills\magazine-layout\scripts'
-$qcSkill = 'C:\Users\YOUR_NAME\.codex\skills\layout-qc\scripts'
-$runner = 'C:\Users\YOUR_NAME\Documents\Codex\2026-09-16\di-y\work\id-run.mjs'
+$skill = 'C:\Users\Wrq07\.codex\skills\magazine-layout\scripts'
+$qcSkill = 'C:\Users\Wrq07\.codex\skills\layout-qc\scripts'
+$runner = 'C:\Users\Wrq07\Documents\Codex\2026-09-16\di-y\work\id-run.mjs'
 $env:PYTHONUTF8 = '1'
 
 $cfg = Get-Content -LiteralPath $Config -Raw -Encoding UTF8 | ConvertFrom-Json

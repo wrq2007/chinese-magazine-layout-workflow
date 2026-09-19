@@ -21,7 +21,7 @@ var CONFIG = {
   gutterMm: 5,
   bodyFont: '微软雅黑' + String.fromCharCode(9) + 'Regular',
   titleFont: '微软雅黑' + String.fromCharCode(9) + 'Bold',
-  outPdf: 'C:/Users/YOUR_NAME/Documents/Codex/2026-09-16/di-y/work/magazine-skeleton.pdf',
+  outPdf: 'C:/Users/Wrq07/Documents/Codex/2026-09-16/di-y/work/magazine-skeleton.pdf',
   label: 'MagazineSkeleton'
 };
 

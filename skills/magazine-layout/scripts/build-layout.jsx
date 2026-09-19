@@ -23,7 +23,7 @@ function P(mm) { return mm * MM; }
 var TAB = String.fromCharCode(9), CR = String.fromCharCode(13);
 var report = [], t0 = new Date().getTime();
 
-var cfgFile = new File('E:/YOUR_PROJECT/_build/layout.json');
+var cfgFile = new File('E:/杂志/序言/_build/layout.json');
 if (!cfgFile.exists) { 'CONFIG_NOT_FOUND: ' + cfgFile.fsName; }
 else {
   cfgFile.encoding = 'UTF-8'; cfgFile.open('r');
