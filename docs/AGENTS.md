@@ -51,6 +51,21 @@
 
 ## 工作流入口（技能与脚本）
 
+### 排版完成后的复核流程（2026-09-19 用户定）
+
+1. **Codex 初次排版完成**
+2. → **交本地 qwen 审一次**：脚本 `E:\杂志\_qwen\ask-qwen.py`（llama-server @127.0.0.1:8080，
+   多模态）。调用时会自动带上 `_qwen\brief.md`（前情提要）与 `_qwen\memory.md`（长期记忆），
+   所以它记得规格、记得"页码不需要"这类已定事项，不会重复提。
+3. → **Codex 按意见修改**
+4. → **交 dsh 复核"是否真的改到位"**：`dsh.cmd --profile headless "<读请求文件>"`。
+   **这一步不再回调 qwen。**
+
+⚠️ 两个坑：
+- 本地模型是**推理模型**，`max_tokens` 给 1800 会被思维链吃光、返回空正文；**给 6000**。
+- 本地模型"没有记忆"是错觉：llama-server 无状态，记忆靠**每次把 brief+memory 塞进上下文**。
+  所以每轮复核后，把新结论追加到 `_qwen\memory.md`，否则同一件事会被反复提。
+
 | 用途 | 位置 |
 | --- | --- |
 | 版式引擎（按页调用版式） | `~/.codex/skills/magazine-layout/scripts/build-layout.jsx`（pattern：cover / text / plate / imageText / quote / toc / signature / blank） |
