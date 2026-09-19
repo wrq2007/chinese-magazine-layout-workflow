@@ -51,6 +51,13 @@
 
 ## 工作流入口（技能与脚本）
 
+> **成本路由（2026-09-19 用户要求）**：先变脚本 → 再转本地模型 → 最后才留给我。详见
+> `layout-qc/references/cost-routing.md`。三条硬性做法：
+> 1. 验收一律用 **一条命令**：`python layout-qc/scripts/qc-all.py <pdf> --sources 源文...`（4–5 秒出表）。
+>    交给复核模型时**只给这张表**，不让它自己读 PDF 量尺寸（那一步要 40–80k token）。
+> 2. **视觉读图默认走本地端点**（`ask-local-model.py`，0 费用）；云端视觉只在需要第二意见时才用。
+> 3. 开工只读 `layout-qc/references/mistakes-brief.md`（2KB），**不要每轮全读 33KB 的 mistakes-log.md**。
+
 ### 排版完成后的复核流程（2026-09-19 用户定）
 
 1. **Codex 初次排版完成**
@@ -76,7 +83,7 @@
 | 成品验收 | `layout-qc/scripts/`：`check-overlap.jsx`、`check-cjk-typography.jsx`、`check-contrast.ps1`、`list-pdf-fonts.ps1`、`measure-export.ps1`、**`check-pdf-print.py`（印前量测）**、**`check-text-fidelity.py`（文字保真）**、**`verify-page-crop.py`（局部观感复核）**；`check-layout-rules.ps1` 目前有 bug（`op_Subtraction`），暂用 `check-pdf-print.py` 顶替 |
 | 先量后放（多图 + 文案自由版式） | `magazine-layout/scripts/lib-flow-measure.jsx`（逐块测高定位，避免文本框重叠） |
 | 设计判断（中文用字/版式/反 AI 味） | skill `art-direction`（重点看 `references/chinese-type.md`） |
-| 已知坑清单 | `layout-qc/references/mistakes-log.md`（**开工前扫一遍**） |
+| 已知坑清单 | 开工前读 **`layout-qc/references/mistakes-brief.md`**（2 分钟版，15 条）；细节再查 `mistakes-log.md`（33KB，**别每轮全读**） |
 
 三个技能都已全局安装，新会话自动可见；DeepSeek Harness 侧同样可用（`~/.dsh/skills`）。
 

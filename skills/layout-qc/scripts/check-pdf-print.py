@@ -1,12 +1,28 @@
 # PDF 印前客观量测：页面盒（含出血/成品框）、内嵌字体、图像有效 DPI
-# 只读，不改文件。用法：python check-pdf-print.py <pdf>
+# 只读，不改文件。
+# 用法：python check-pdf-print.py <pdf> [--w 185] [--h 260] [--bleed 3] [--no-margin]
+#   开本与出血可传参，所以同一支脚本也能量 A3 单页图、海报等非刊物件。
+#   ⚠️ 边距判定线写死的是刊物版心（上18/下22/内20/外16）；量非刊物件时加 --no-margin，
+#      否则会把"不是刊物版心"误报成不合格。
 import sys, io, fitz
 from PIL import Image
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 PT2MM = 25.4 / 72.0
-BLEED_MM = 3.0
+
+_args = sys.argv[2:]
+def _opt(name, default):
+    if name in _args:
+        try:
+            return float(_args[_args.index(name) + 1])
+        except Exception:
+            pass
+    return default
+EXP_W = _opt('--w', 185.0)
+EXP_H = _opt('--h', 260.0)
+BLEED_MM = _opt('--bleed', 3.0)
+NO_MARGIN = '--no-margin' in _args
 
 def mm(v):
     return round(v * PT2MM, 2)
@@ -30,11 +46,12 @@ for i, page in enumerate(doc):
     print('  MediaBox : %.2f × %.2f mm' % (w, h))
     print('  TrimBox  : %.2f × %.2f mm  (成品尺寸)' % (tw, th))
     print('  出血      : 左%.2f 右%.2f 上%.2f 下%.2f mm' % (bl, br, bt, bo))
-    if abs(tw - 185) > 0.3 or abs(th - 260) > 0.3:
-        bad.append('P%d 成品框不是 185×260' % (i + 1))
-    for name, v in (('左', bl), ('右', br), ('上', bt), ('下', bo)):
-        if abs(v - 3) > 0.3:
-            bad.append('P%d %s出血 %.2fmm ≠ 3mm' % (i + 1, name, v))
+    if abs(tw - EXP_W) > 0.3 or abs(th - EXP_H) > 0.3:
+        bad.append('P%d 成品框不是 %g×%g' % (i + 1, EXP_W, EXP_H))
+    if BLEED_MM > 0:
+        for name, v in (('左', bl), ('右', br), ('上', bt), ('下', bo)):
+            if abs(v - BLEED_MM) > 0.3:
+                bad.append('P%d %s出血 %.2fmm ≠ %.2gmm' % (i + 1, name, v, BLEED_MM))
 
 print('\n=== 内嵌字体 ===')
 allfonts = {}
@@ -91,6 +108,10 @@ for i, page in enumerate(doc):
     top = by0 - BLEED_MM
     bottom = (page.rect.height * 25.4 / 72.0 - BLEED_MM) - (by1 - BLEED_MM)
     inner, outer = (left, right) if (i % 2 == 0) else (right, left)
+    if NO_MARGIN:
+        print('  P%d  上%6.1f  下%6.1f  内%6.1f  外%6.1f mm    [仅记录，不判版心]'
+              % (i + 1, top, bottom, inner, outer))
+        continue
     ok = (top >= MIN['上'] - 0.4 and bottom >= MIN['下'] - 0.4
           and inner >= MIN['内'] - 0.4 and outer >= MIN['外'] - 0.4)
     print('  P%d  上%6.1f  下%6.1f  内%6.1f  外%6.1f mm    %s'
