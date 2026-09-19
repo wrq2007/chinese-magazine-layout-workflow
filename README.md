@@ -133,9 +133,9 @@ Codex 排版 → 本地多模态模型审 → Codex 改 → 另一个模型复�
 ├── LICENSE
 ├── skills/
 │   ├── art-direction/           审美与用字（1 入口 + 9 参考）
-│   ├── magazine-layout/         结构与引擎（SKILL + 4 参考 + 6 脚本）
+│   ├── magazine-layout/         结构与引擎（SKILL + 4 参考 + 7 脚本）
 │   ├── cng-magazine-layout/     规格来源（含栅格 SVG 与生成脚本）
-│   ├── layout-qc/               成品验收（SKILL + 4 参考 + 10 脚本）
+│   ├── layout-qc/               成品验收（SKILL + 4 参考 + 14 脚本）
 │   └── web-research/            联网检索（SKILL + 2 脚本）
 ├── docs/
 │   ├── AGENTS.md                项目指令模板（把这份放进你的项目根目录）
