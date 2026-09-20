@@ -30,7 +30,13 @@ CHECKS = [
      [r'\[合格\] 同类装饰规格一致', r'\[不一致\]']),
     ('孤字成行', 'check-orphan.py',
      [r'\[合格\] 没有段落以', r'\[孤字\]', r'末行仅']),
-    ('总墨量 TAC', 'check-tac.py', [r'\[合格\] 所有位图', r'\[需处理\]']),
+    ('总墨量 TAC', 'check-tac.py', [r'\[合格\] 所有位图', r'\[需处理\]', r'\[注意\] 贴线']),
+    ('文字墨色（色版构成）', 'check-text-ink.py',
+     [r'\[合格\] 文字只用单色黑', r'\[注意\] 文字用', r'\[需处理\] 文字用四色黑']),
+    ('输出意图 / 色彩管理', 'check-output-intent.py',
+     [r'\[合格\] 已内嵌输出意图', r'\[注意\] PDF 没有内嵌输出意图']),
+    ('图注（对比度/残字/间距）', 'check-caption.py',
+     [r'\[合格\] \d+ 个图注块', r'\[注意\] 图注', r'\[需处理\] \d+ 个图注块']),
 ]
 
 
@@ -60,6 +66,8 @@ def verdict(lines):
         return 'SKIP'
     if re.search(r'\[不合格\]|\[不一致\]|\[需处理\]|\[小于版心要求\]', joined):
         return 'FAIL'
+    if re.search(r'\[注意\]', joined):
+        return 'WARN'
     if re.search(r'\[合格\]', joined):
         return 'PASS'
     return 'INFO'
@@ -70,6 +78,8 @@ def main():
     ap.add_argument('pdf')
     ap.add_argument('--sources', nargs='*', default=[], help='文字保真核对用的源文件')
     ap.add_argument('--json', action='store_true')
+    ap.add_argument('--no-margin', action='store_true',
+                    help='满版出血件（背景图铺到出血边）用它：跳过"实际边距"的版心判定')
     a = ap.parse_args()
 
     results = []
@@ -81,8 +91,9 @@ def main():
             cache[key] = run(script, args)
         return cache[key]
 
+    extra = ['--no-margin'] if a.no_margin else []
     for name, script, pats in CHECKS:
-        lines = pick(get(script, [a.pdf]), pats)
+        lines = pick(get(script, [a.pdf] + extra), pats)
         results.append((name, verdict(lines), lines))
 
     if a.sources:
@@ -93,9 +104,11 @@ def main():
         results.append(('文字保真（PDF 抽字）', 'SKIP', ['（未提供 --sources，跳过）']))
 
     failed = [r for r in results if r[1] == 'FAIL']
+    warned = [r for r in results if r[1] == 'WARN']
 
     if a.json:
         print(json.dumps({'pdf': a.pdf, 'pass': not failed,
+                          'warn': [n for n, _, _ in warned],
                           'checks': [{'name': n, 'verdict': v, 'evidence': l} for n, v, l in results]},
                          ensure_ascii=False, indent=1))
         return 0 if not failed else 1
@@ -104,7 +117,7 @@ def main():
     print('验收汇总：%s' % os.path.basename(a.pdf))
     print('=' * 78)
     for name, v, lines in results:
-        mark = {'PASS': '合格', 'FAIL': '不合格', 'SKIP': '跳过', 'INFO': '记录'}[v]
+        mark = {'PASS': '合格', 'FAIL': '不合格', 'WARN': '注意', 'SKIP': '跳过', 'INFO': '记录'}[v]
         print('\n【%s】%s' % (mark, name))
         for l in lines[:6]:
             print('    ' + l)
@@ -113,7 +126,13 @@ def main():
     print('\n' + '=' * 78)
     if failed:
         print('总判定：[有不合格项] ' + '、'.join(n for n, _, _ in failed))
+        if warned:
+            print('另有需注意：' + '、'.join(n for n, _, _ in warned))
         return 1
+    if warned:
+        print('总判定：[无不合格，但有 %d 项需注意] %s'
+              % (len(warned), '、'.join(n for n, _, _ in warned)))
+        return 0
     print('总判定：[全部合格]')
     return 0
 

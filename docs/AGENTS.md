@@ -58,7 +58,7 @@
 > 2. **视觉读图默认走本地端点**（`ask-local-model.py`，0 费用）；云端视觉只在需要第二意见时才用。
 > 3. 开工只读 `layout-qc/references/mistakes-brief.md`（2KB），**不要每轮全读 33KB 的 mistakes-log.md**。
 
-### 排版完成后的复核流程（2026-09-19 用户定）
+### 排版完成后的复核流程（2026-09-20 改版）
 
 **第 0 步（排版之前）：文字审计**——查错别字、语法、标点、用词。
 
@@ -71,18 +71,29 @@ python layout-qc/scripts/audit-text.py <源文.md>       # 本地模型出初筛
 ⚠️ 模型报出来的**未经核实不得采信**（它会误报口语化表达）；确认后的改动要同步回源文，
 否则下次从源文重建会把修改冲掉。
 
-1. **Codex 初次排版完成**
+1. **Codex 初次排版完成**（自己先跑一遍 `qc-all`，不合格项自己改掉，不要带着问题去复核）
 2. → **交本地 qwen 审一次**：脚本 `E:\杂志\_qwen\ask-qwen.py`（llama-server @127.0.0.1:8080，
    多模态）。调用时会自动带上 `_qwen\brief.md`（前情提要）与 `_qwen\memory.md`（长期记忆），
    所以它记得规格、记得"页码不需要"这类已定事项，不会重复提。
 3. → **Codex 按意见修改**
-4. → **交 dsh 复核"是否真的改到位"**：`dsh.cmd --profile headless "<读请求文件>"`。
-   **这一步不再回调 qwen。**
+4. → **交冷启动复核子代理"独立复核"**（零上下文，**不回调 qwen**）：
+   写一份盲审任务书放 `work\<NN>-<篇名>\`，用 `fork_turns="none"` 派生子代理去执行。
+   任务书里必须有三条硬约束：**不许读 `_qwen\` 的意见目录**、**不许调用本项目现成质检脚本**
+   （要它自己写量测）、**不许用模型读图核对文字**。
+   ⚠️ 它报的每个数值，**Codex 要自己复算一遍再采信**——实测它也会算错。
+
+> 2026-09-20 之前第 4 步是"交另一个外部工具链复核"。做过一次同成品同任务书的 A/B：
+> 覆盖面与准确度**互有胜负**，于是换成子代理（少一个活动部件、能覆盖多件成品）。
+> 但**两者走同一个 API key，换掉它不省额度**。对照数据见
+> `layout-qc/references/review-loop.md`。dsh 已不再出现在例行流程里。
 
 ⚠️ 两个坑：
 - 本地模型是**推理模型**，`max_tokens` 给 1800 会被思维链吃光、返回空正文；**给 6000**。
 - 本地模型"没有记忆"是错觉：llama-server 无状态，记忆靠**每次把 brief+memory 塞进上下文**。
   所以每轮复核后，把新结论追加到 `_qwen\memory.md`，否则同一件事会被反复提。
+
+⚠️ **复核者抓到的新类型发现，当场固化成 `qc-all` 的检查项**（见 mistakes-log B48）。
+复核者反复报同一类问题，是流程缺陷，不是它的功劳。
 
 | 用途 | 位置 |
 | --- | --- |
@@ -91,12 +102,13 @@ python layout-qc/scripts/audit-text.py <源文.md>       # 本地模型出初筛
 | 背景生成（模糊 + 渐变遮罩 + **自动对比度校准**） | `magazine-layout/scripts/make-background.ps1` |
 | 源文解析（docx/md/txt → 段落数组） | `magazine-layout/scripts/extract-text.py` |
 | 一条命令流水线 | `magazine-layout/scripts/make-piece.ps1` |
-| 成品验收 | `layout-qc/scripts/`：`check-overlap.jsx`、`check-cjk-typography.jsx`、`check-contrast.ps1`、`list-pdf-fonts.ps1`、`measure-export.ps1`、**`check-pdf-print.py`（印前量测）**、**`check-text-fidelity.py`（文字保真）**、**`verify-page-crop.py`（局部观感复核）**；`check-layout-rules.ps1` 目前有 bug（`op_Subtraction`），暂用 `check-pdf-print.py` 顶替 |
+| 成品验收 | `layout-qc/scripts/`：**`qc-all.py` 一条命令跑完十项**——页面盒/出血/DPI、实际边距、内嵌字体、装饰一致性、孤字成行、总墨量 TAC（含"贴线"提醒）、**文字墨色色版构成（check-text-ink.py）**、**输出意图/色彩管理（check-output-intent.py）**、**图注对比度-残字-间距（check-caption.py）**、文字保真（check-text-fidelity.py）。另有 `check-overlap.jsx`、`check-cjk-typography.jsx`、`check-contrast.ps1`、`list-pdf-fonts.ps1`、`measure-export.ps1`、`verify-page-crop.py` 备用 |
 | 先量后放（多图 + 文案自由版式） | `magazine-layout/scripts/lib-flow-measure.jsx`（逐块测高定位，避免文本框重叠） |
 | 设计判断（中文用字/版式/反 AI 味） | skill `art-direction`（重点看 `references/chinese-type.md`） |
 | 已知坑清单 | 开工前读 **`layout-qc/references/mistakes-brief.md`**（2 分钟版，15 条）；细节再查 `mistakes-log.md`（33KB，**别每轮全读**） |
 
-三个技能都已全局安装，新会话自动可见；DeepSeek Harness 侧同样可用（`~/.dsh/skills`）。
+三个技能都已全局安装，新会话自动可见。
+（2026-09-20 起不再依赖 DeepSeek Harness；`~/.dsh/skills` 那套同步已停。）
 
 ## 与 InDesign 交互的要点（血泪版）
 
