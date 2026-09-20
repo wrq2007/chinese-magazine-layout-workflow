@@ -10,17 +10,12 @@ Copy-Item .\skills\* "$HOME\.codex\skills\" -Recurse -Force
 
 装完新开一个会话即可，技能会自动出现在可用列表里。
 
-### DeepSeek Harness（如使用）
-
-```powershell
-Copy-Item .\skills\* "$HOME\.dsh\skills\" -Recurse -Force
-```
-
-dsh 的本地技能根目录为：`<项目>/.dsh/skills`、`<项目>/.agents/skills`、`~/.dsh/skills`。
-
-> dsh（DeepSeek Harness）在本工作流里承担**视觉复读与文案生成**（依托 DeepSeek 的视觉/语言模型），
-> 与 Codex 共用同一台 InDesign。InDesign MCP 桥接在 dsh 侧的配置写法、并行安全纪律、
-> 以及实测性能数据见 [docs/architecture.md](docs/architecture.md)。
+> **2026-09-20 起本工作流不再需要第二个运行体。** 此前 Codex 看不了图，所以另装了一个
+> DeepSeek Harness（dsh）负责看图与写文案；现在 Codex 自己就能读图，那部分工作已整体接过来，
+> 交接清单见 [docs/AGENTS.md](docs/AGENTS.md) 的「视觉工作由谁做」。
+>
+> 所以**只装 Codex 那一份就行**。若你手上已有 dsh 环境，旧配置写法保留在
+> [docs/architecture.md](docs/architecture.md) 作参考，但例行流程不再调用它。
 
 ## 2. 改占位路径（必做）
 
@@ -71,13 +66,15 @@ powershell -ExecutionPolicy Bypass -File skills/magazine-layout/scripts/make-bac
 # 3) 按配置排版（先照 examples/ 改一份 layout.json 到你的 _build 目录）
 node work/id-run.mjs skills/magazine-layout/scripts/build-layout.jsx
 
-# 4) 验收
-powershell -ExecutionPolicy Bypass -File skills/layout-qc/scripts/check-overlap.jsx   # 在 InDesign 内执行
-powershell -ExecutionPolicy Bypass -File skills/layout-qc/scripts/list-pdf-fonts.ps1 -Path "产物.pdf"
+# 4) 验收：一条命令跑完十项（页面盒/出血/DPI、边距、内嵌字体、装饰一致性、
+#    孤字成行、总墨量 TAC、文字墨色色版、输出意图、图注、文字保真）
+python skills/layout-qc/scripts/qc-all.py "产物.pdf" --sources "你的文稿.docx"
+# 备用：在 InDesign 内执行 check-overlap.jsx；查字体名 list-pdf-fonts.ps1
 ```
 
 ## 5. 出问题先看这里
 
-- `skills/layout-qc/references/mistakes-log.md` —— 16 条真实踩过的坑（单位、母版、出血、字体回退、BOM、并行安全…）；
+- `skills/layout-qc/references/mistakes-brief.md` —— **开工先读这一份**（约 2KB，19 条真实踩过的坑：单位、母版、出血、字体回退、BOM、并行安全…）；
+- `skills/layout-qc/references/mistakes-log.md` —— 全档（更大，列细节时才查，别每轮全读）；
 - `skills/layout-qc/references/indesign-pitfalls.md` —— InDesign 自动化的具体 API 陷阱；
 - `docs/AGENTS.md` —— 如果你想把这个工作流交给 AI 接手，把这份放进项目根目录即可。
