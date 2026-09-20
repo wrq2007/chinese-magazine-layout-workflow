@@ -74,7 +74,7 @@ python skills/layout-qc/scripts/qc-all.py "产物.pdf" --sources "你的文稿.d
 
 ## 5. 出问题先看这里
 
-- `skills/layout-qc/references/mistakes-brief.md` —— **开工先读这一份**（约 2KB，19 条真实踩过的坑：单位、母版、出血、字体回退、BOM、并行安全…）；
+- `skills/layout-qc/references/mistakes-brief.md` —— **开工先读这一份**（2 分钟版，21 条真实踩过的坑：单位、母版、出血、字体回退、BOM、并行安全…）；
 - `skills/layout-qc/references/mistakes-log.md` —— 全档（更大，列细节时才查，别每轮全读）；
 - `skills/layout-qc/references/indesign-pitfalls.md` —— InDesign 自动化的具体 API 陷阱；
 - `docs/AGENTS.md` —— 如果你想把这个工作流交给 AI 接手，把这份放进项目根目录即可。

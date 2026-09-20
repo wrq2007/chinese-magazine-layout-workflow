@@ -86,7 +86,7 @@
 > 1. 验收一律用 **一条命令**：`python layout-qc/scripts/qc-all.py <pdf> --sources 源文...`（十项，4–10 秒出表）。
 >    交给复核模型时**只给这张表**，不让它自己读 PDF 量尺寸（那一步要 40–80k token）。
 > 2. **视觉读图默认走本地端点**（`ask-local-model.py`，0 费用）；云端视觉只在需要第二意见时才用。
-> 3. 开工只读 `layout-qc/references/mistakes-brief.md`（2KB），**不要每轮全读 33KB 的 mistakes-log.md**。
+> 3. 开工只读 `layout-qc/references/mistakes-brief.md`，**不要每轮全读 `mistakes-log.md`**。
 
 ### 排版完成后的复核流程（2026-09-20 改版）
 
@@ -135,7 +135,7 @@ python layout-qc/scripts/audit-text.py <源文.md>       # 本地模型出初筛
 | 成品验收 | `layout-qc/scripts/`：**`qc-all.py` 一条命令跑完十项**——页面盒/出血/DPI、实际边距、内嵌字体、装饰一致性、孤字成行、总墨量 TAC（含"贴线"提醒）、**文字墨色色版构成（check-text-ink.py）**、**输出意图/色彩管理（check-output-intent.py）**、**图注对比度-残字-间距（check-caption.py）**、文字保真（check-text-fidelity.py）。另有 `check-overlap.jsx`、`check-cjk-typography.jsx`、`check-contrast.ps1`、`list-pdf-fonts.ps1`、`measure-export.ps1`、`verify-page-crop.py` 备用 |
 | 先量后放（多图 + 文案自由版式） | `magazine-layout/scripts/lib-flow-measure.jsx`（逐块测高定位，避免文本框重叠） |
 | 设计判断（中文用字/版式/反 AI 味） | skill `art-direction`（重点看 `references/chinese-type.md`） |
-| 已知坑清单 | 开工前读 **`layout-qc/references/mistakes-brief.md`**（2 分钟版，19 条）；细节再查 `mistakes-log.md`（45KB，**别每轮全读**） |
+| 已知坑清单 | 开工前读 **`layout-qc/references/mistakes-brief.md`**（2 分钟版，21 条）；细节再查 `mistakes-log.md`（**别每轮全读**） |
 
 三个技能都已全局安装，新会话自动可见。
 （2026-09-20 起不再依赖 DeepSeek Harness；`~/.dsh/skills` 那套同步已停。）
@@ -145,6 +145,17 @@ python layout-qc/scripts/audit-text.py <源文.md>       # 本地模型出初筛
 - 标尺单位设为 POINTS，坐标用 `mm × 2.8346`；**字号/行距也跟随标尺单位**（设成毫米会让 33pt 变 33mm → 文字溢出消失）
 - 母版必须逐页 `appliedMaster` 才会出现页码
 - 导出 PDF 时**不要传预设**（预设会覆盖 `useDocumentBleedWithPDF`，导致 0 出血）
+- ⚠️ **`useDocumentBleedWithPDF` 是应用级偏好，会被别的导出改掉**（2026-09-20 踩）：
+  文档里明明是 3mm 出血，偏好被留成 `false`，导出来就是四边 0.00mm。
+  **每次导出前显式设 `true`，导完回读一次确认**；交付前用 `qc-all.py` 核四边出血。
+- ⚠️ **补输出意图不要用 `standardsCompliance` 抄近路**：它不写 `/OutputIntent`，
+  却会按残留的 `pdfXProfile`（本机是 Japan Color 2001 Coated，上限 350%）把全图重新分色——
+  实测同一份稿从"未越线"变成 **338% TAC**、反白小字变四色叠。要用**目的配置文件正确的 PDF/X 预设**，
+  或等印厂定标准。（mistakes-log B54）
+- ⚠️ **应用级偏好还原有顺序**：`standardsCompliance` 停在 PDF/X 时 `pdfDestinationProfile` 被锁定，
+  先还原 profile 会报"此属性值被锁定"。**先还原 `standardsCompliance`，再还原 profile。**
+- ⚠️ **文件 mtime 只能当线索，不能当证据**：凭"PDF 比 .indd 早 2 分钟"断言过"交付件缺最后一次改动"，
+  抽文比对后 1246 = 1246 完全一致。判断"是不是最新内容"就抽文字比对。（mistakes-log B55）
 - JPG 导出忽略 `pageString`：一次导整本，"文件名 + 页码"
 - 只操作自己打 `label` 的文档；收工关闭自己并恢复原置前文档（并行安全）
 - 脚本含中文时必须存 **UTF-8 with BOM**，否则 PowerShell 5.1 按 ANSI 解析报语法错

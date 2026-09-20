@@ -23,6 +23,9 @@ param(
   [int]$ScrimTop = 178,
   [int]$ScrimMid = 172,
   [int]$ScrimBottom = 72,
+  [switch]$RampAllBands,   # 校准同时给上/中/下三段加码。
+                           # 默认只加上/中两段（底部假定已足够重）；底图若"下亮上暗"，必须开这个，
+                           # 否则底部那条亮带永远压不到 4.5:1，脚本会一路加到上限仍报不达标。
   [double]$ShadowGamma = 0.88,
   [int]$TopMm = 26, [int]$BottomMm = 250,   # 参与对比度校准的文字纵向范围
   [switch]$SkipCalibration
@@ -133,6 +136,7 @@ if (-not $SkipCalibration) {
   while ($meas.Below -gt 0 -and $midA -lt 240 -and $round -lt 8) {
     $topA = [Math]::Min(250, $topA + 10)
     $midA = [Math]::Min(250, $midA + 10)
+    if ($RampAllBands) { $botA = [Math]::Min(250, $botA + 10) }
     $round++
     $pan.Dispose()
     $pan = Build-Panorama $topA $midA $botA
